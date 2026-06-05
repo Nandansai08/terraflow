@@ -104,9 +104,10 @@ describe('Terraflow Spatial Engine & Privacy Interceptor Integration Suite', () 
       const result = await postsService.explore(mockQuery);
       expect(result.type).toBe('CLUSTERS');
       
-      const clusters = (result as any).clusters;
-      expect(clusters.length).toBe(1); // Groups both points into a single parent cell
-      expect(clusters[0].count).toBe(2);
+      if (result.type === 'CLUSTERS') {
+        expect(result.clusters.length).toBe(1); // Groups both points into a single parent cell
+        expect(result.clusters[0].count).toBe(2);
+      }
     });
   });
 
@@ -127,7 +128,9 @@ describe('Terraflow Spatial Engine & Privacy Interceptor Integration Suite', () 
 
       const result = await postsService.explore(mockQuery);
       expect(result.type).toBe('POSTS');
-      expect((result as any).posts.length).toBe(0); // Query blocks unauthorized friends posts from anonymous viewers
+      if (result.type === 'POSTS') {
+        expect(result.posts.length).toBe(0); // Query blocks unauthorized friends posts from anonymous viewers
+      }
       
       expect(prisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -234,8 +237,8 @@ describe('Terraflow Spatial Engine & Privacy Interceptor Integration Suite', () 
 
       expect(result.type).toBe('CLUSTERS');
       expect(result.total).toBe(120);
-      expect((result as any).page).toBe(1);
-      expect((result as any).limit).toBe(50);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(50);
       expect(result.hasMore).toBe(true);
     });
 
@@ -261,8 +264,8 @@ describe('Terraflow Spatial Engine & Privacy Interceptor Integration Suite', () 
 
       expect(result.type).toBe('POSTS');
       expect(result.total).toBe(60);
-      expect((result as any).page).toBe(2);
-      expect((result as any).limit).toBe(50);
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(50);
       expect(result.hasMore).toBe(false);
     });
   });
