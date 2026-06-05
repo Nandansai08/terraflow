@@ -2,6 +2,44 @@ import { Injectable, InternalServerErrorException, NotFoundException, ForbiddenE
 import { prisma } from '@terraflow/database';
 import * as h3 from 'h3-js';
 
+export interface ExploreCluster {
+  h3Index: string;
+  latitude: number;
+  longitude: number;
+  count: number;
+  postSample: any;
+}
+
+export interface ClustersResponse {
+  type: 'CLUSTERS';
+  clusters: ExploreCluster[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export interface PostsResponse {
+  type: 'POSTS';
+  posts: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    latitude: number;
+    longitude: number;
+    tags: string[];
+    createdAt: Date;
+    user: any;
+    media: any[];
+  }>;
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export type ExploreResponse = ClustersResponse | PostsResponse;
+
 @Injectable()
 export class PostsService {
   
@@ -76,7 +114,7 @@ export class PostsService {
     category?: string;
     requestingUserId?: string;
     page?: number;
-  }) {
+  }): Promise<ExploreResponse> {
     const { minLat, maxLat, minLng, maxLng, zoomLevel, category, requestingUserId, page = 1 } = query;
     const h3Resolution = this.getH3Resolution(zoomLevel);
     const limit = 50;
@@ -176,6 +214,8 @@ export class PostsService {
         type: 'CLUSTERS',
         clusters: Array.from(clusterMap.values()),
         total,
+        page,
+        limit,
         hasMore: skip + limit < total,
       };
     }
@@ -194,6 +234,8 @@ export class PostsService {
         media: post.media,
       })),
       total,
+      page,
+      limit,
       hasMore: skip + limit < total,
     };
   }
@@ -333,7 +375,10 @@ export class PostsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return { posts, total: posts.length, page };
+    const total = await prisma.post.count({ where });
+    const hasMore = skip + limit < total;
+
+    return { posts, total, page, limit, hasMore };
   }
 
   private async asyncUpdateTravelStats(userId: string, lat: number, lng: number) {
