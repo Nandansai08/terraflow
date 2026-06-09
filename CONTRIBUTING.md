@@ -22,9 +22,10 @@ npm run dev:api
 npm run dev:web
 ```
 
-On Windows PowerShell, use `npm.cmd` if `npm` is blocked by execution policy:
+On Windows PowerShell, use `npm.cmd` if standard `npm` commands are blocked by execution policy (for example, `npm.cmd install` or `npm.cmd run build`). This workaround avoids changing PowerShell execution policies globally:
 
 ```bash
+npm.cmd install
 npm.cmd run build
 ```
 
