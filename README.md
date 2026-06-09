@@ -43,7 +43,7 @@ The user journey should keep Earth as the primary surface. Guests can explore fi
 - Optional: Redis for worker-backed flows
 - Optional: Google Cloud Storage credentials for production media storage
 
-On Windows PowerShell, use `npm.cmd` if `npm` is blocked by script execution policy.
+On Windows PowerShell, use `npm.cmd` (for example, `npm.cmd install` or `npm.cmd run build`) if plain `npm` is blocked by script execution policy. This workaround avoids the need to change PowerShell execution policies globally.
 
 ## Installation
 
