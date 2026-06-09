@@ -530,7 +530,7 @@ export default function HomePage() {
           <strong>Explore by orbit</strong>
           <p>Drag the planet, search a place, or select a memory. TerraFlow stays out of the way until a story matters.</p>
         </div>
-        <button className="tf-icon-button" title="Return to global view" onClick={() => globeRef.current?.flyTo(20, 10, 10500000)}>
+        <button className="tf-icon-button" title="Return to global view" aria-label="Return to global view" onClick={() => globeRef.current?.flyTo(20, 10, 10500000)}>
           <LocateFixed size={18} />
         </button>
       </aside>
@@ -583,7 +583,7 @@ export default function HomePage() {
                 <div className="tf-eyebrow">Notifications</div>
                 <h2 style={{ margin: '8px 0 0', fontSize: 28, letterSpacing: '-0.05em' }}>Activity near your world</h2>
               </div>
-              <button className="tf-icon-button" onClick={() => setShowNotifications(false)}><X size={17} /></button>
+              <button className="tf-icon-button" onClick={() => setShowNotifications(false)} aria-label="Close notifications"><X size={17} /></button>
             </div>
             <div style={{ display: 'grid', gap: 12 }}>
               {['No new memory replies yet.', 'Saved places and friend activity will appear here.', 'Upload a memory to start building your map.'].map(text => (

@@ -86,7 +86,7 @@ export default function MemoryCard({ post, currentUserId, token, onClose, onDele
             Fly closer
           </button>
           {isOwner && (
-            <button className="tf-icon-button" onClick={handleDelete} disabled={deleting} title="Delete memory">
+            <button className="tf-icon-button" onClick={handleDelete} disabled={deleting} title="Delete memory" aria-label="Delete memory">
               <Trash2 size={15} />
             </button>
           )}
