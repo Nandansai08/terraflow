@@ -3,8 +3,9 @@ import { prisma, ReportStatus } from '@terraflow/database';
 
 @Injectable()
 export class ModerationService {
-  async getReports() {
+  async getReports(status: ReportStatus = ReportStatus.PENDING, page = 1, limit = 50) {
     return prisma.report.findMany({
+      where: { status },
       include: {
         reporter: {
           select: {
@@ -31,6 +32,8 @@ export class ModerationService {
       orderBy: {
         createdAt: 'desc',
       },
+      skip: (page - 1) * limit,
+      take: limit,
     });
   }
 
@@ -48,7 +51,7 @@ export class ModerationService {
         data: { status },
       });
 
-      if (status === 'RESOLVED' && report.postId) {
+      if (status === ReportStatus.RESOLVED && report.postId) {
         await tx.post.update({
           where: { id: report.postId },
           data: { isModerated: true },

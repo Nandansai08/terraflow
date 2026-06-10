@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { PostsService } from './posts.service.js';
 import { PostsController } from './posts.controller.js';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard.js';
-import { prisma } from '@terraflow/database';
-import { UnauthorizedException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { prisma, ReportStatus } from '@terraflow/database';
+import { UnauthorizedException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
 import * as h3 from 'h3-js';
 import { JsonWebTokenError } from 'jsonwebtoken';
 
@@ -27,7 +27,14 @@ vi.mock('@terraflow/database', () => ({
     },
     report: {
       create: vi.fn(),
+      findFirst: vi.fn(),
     }
+  },
+  ReportStatus: {
+    PENDING: 'PENDING',
+    REVIEWED: 'REVIEWED',
+    DISMISSED: 'DISMISSED',
+    RESOLVED: 'RESOLVED',
   },
 }));
 
@@ -655,6 +662,7 @@ describe('Terraflow Spatial Engine & Privacy Interceptor Integration Suite', () 
     it('should successfully report a post and trim reason', async () => {
       const mockPost = { id: 'post-123', title: 'Post' };
       (prisma.post.findUnique as Mock).mockResolvedValue(mockPost);
+      (prisma.report.findFirst as Mock).mockResolvedValue(null);
       (prisma.report.create as Mock).mockResolvedValue({ id: 'report-1' });
 
       const result = await postsService.reportPost('post-123', 'user-456', '  Spam and abuse  ');
@@ -665,7 +673,7 @@ describe('Terraflow Spatial Engine & Privacy Interceptor Integration Suite', () 
           postId: 'post-123',
           reporterId: 'user-456',
           reason: 'Spam and abuse',
-          status: 'PENDING',
+          status: ReportStatus.PENDING,
         },
       });
     });
@@ -685,6 +693,25 @@ describe('Terraflow Spatial Engine & Privacy Interceptor Integration Suite', () 
       await expect(postsService.reportPost('invalid-post', 'user-456', 'Spam')).rejects.toThrow(
         'Post not found'
       );
+    });
+
+    it('should throw ConflictException if reporter has already reported the post', async () => {
+      const mockPost = { id: 'post-123', title: 'Post' };
+      (prisma.post.findUnique as Mock).mockResolvedValue(mockPost);
+      // Simulate that a report already exists
+      (prisma.report.findFirst as Mock).mockResolvedValue({ id: 'existing-report-id' });
+
+      await expect(
+        postsService.reportPost('post-123', 'user-456', 'Spam')
+      ).rejects.toThrow(ConflictException);
+
+      expect(prisma.report.findFirst).toHaveBeenCalledWith({
+        where: {
+          postId: 'post-123',
+          reporterId: 'user-456',
+        },
+      });
+      expect(prisma.report.create).not.toHaveBeenCalled();
     });
   });
 });

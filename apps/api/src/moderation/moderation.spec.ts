@@ -3,7 +3,10 @@ import { ModerationService } from './moderation.service.js';
 import { RolesGuard } from '../auth/roles.guard.js';
 import { Reflector } from '@nestjs/core';
 import { ExecutionContext } from '@nestjs/common';
-import { prisma } from '@terraflow/database';
+import { prisma, ReportStatus } from '@terraflow/database';
+import { validate } from 'class-validator';
+import { UpdateReportDto } from './update-report.dto.js';
+import { GetReportsQueryDto } from './get-reports-query.dto.js';
 
 vi.mock('@terraflow/database', () => {
   const mockPrisma = {
@@ -17,7 +20,15 @@ vi.mock('@terraflow/database', () => {
     },
     $transaction: vi.fn((cb) => cb(mockPrisma)),
   };
-  return { prisma: mockPrisma };
+  return {
+    prisma: mockPrisma,
+    ReportStatus: {
+      PENDING: 'PENDING',
+      REVIEWED: 'REVIEWED',
+      DISMISSED: 'DISMISSED',
+      RESOLVED: 'RESOLVED',
+    },
+  };
 });
 
 describe('Moderation Service & RolesGuard Suite', () => {
@@ -29,12 +40,12 @@ describe('Moderation Service & RolesGuard Suite', () => {
   });
 
   describe('ModerationService.getReports()', () => {
-    it('should return reports with reporter and post details', async () => {
+    it('should return reports with reporter and post details and apply filters', async () => {
       const mockReports = [
         {
           id: 'report-1',
           reason: 'Spam',
-          status: 'PENDING',
+          status: ReportStatus.PENDING,
           reporter: { id: 'u1', username: 'reporter1' },
           post: { id: 'p1', title: 'Post title' },
         },
@@ -42,14 +53,41 @@ describe('Moderation Service & RolesGuard Suite', () => {
 
       (prisma.report.findMany as Mock).mockResolvedValue(mockReports);
 
-      const result = await moderationService.getReports();
+      const result = await moderationService.getReports(ReportStatus.PENDING, 1, 50);
       expect(result).toEqual(mockReports);
       expect(prisma.report.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: { status: ReportStatus.PENDING },
+          skip: 0,
+          take: 50,
           include: expect.objectContaining({
             reporter: expect.any(Object),
             post: expect.any(Object),
           }),
+        })
+      );
+    });
+
+    it('should default to PENDING status, page 1, and limit 50 when no parameters are provided', async () => {
+      (prisma.report.findMany as Mock).mockResolvedValue([]);
+      await moderationService.getReports();
+      expect(prisma.report.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: ReportStatus.PENDING },
+          skip: 0,
+          take: 50,
+        })
+      );
+    });
+
+    it('should query with custom status, page, and limit parameters', async () => {
+      (prisma.report.findMany as Mock).mockResolvedValue([]);
+      await moderationService.getReports(ReportStatus.RESOLVED, 3, 15);
+      expect(prisma.report.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: ReportStatus.RESOLVED },
+          skip: 30, // (3 - 1) * 15
+          take: 15,
         })
       );
     });
@@ -61,21 +99,21 @@ describe('Moderation Service & RolesGuard Suite', () => {
         id: 'report-1',
         postId: 'post-1',
         reason: 'Spam',
-        status: 'PENDING',
+        status: ReportStatus.PENDING,
       };
 
       (prisma.report.findUnique as Mock).mockResolvedValue(mockReport);
       (prisma.report.update as Mock).mockResolvedValue({
         ...mockReport,
-        status: 'RESOLVED',
+        status: ReportStatus.RESOLVED,
       });
 
-      const result = await moderationService.updateReportStatus('report-1', 'RESOLVED');
+      const result = await moderationService.updateReportStatus('report-1', ReportStatus.RESOLVED);
 
-      expect(result.status).toBe('RESOLVED');
+      expect(result.status).toBe(ReportStatus.RESOLVED);
       expect(prisma.report.update).toHaveBeenCalledWith({
         where: { id: 'report-1' },
-        data: { status: 'RESOLVED' },
+        data: { status: ReportStatus.RESOLVED },
       });
       expect(prisma.post.update).toHaveBeenCalledWith({
         where: { id: 'post-1' },
@@ -88,21 +126,21 @@ describe('Moderation Service & RolesGuard Suite', () => {
         id: 'report-1',
         postId: 'post-1',
         reason: 'Spam',
-        status: 'PENDING',
+        status: ReportStatus.PENDING,
       };
 
       (prisma.report.findUnique as Mock).mockResolvedValue(mockReport);
       (prisma.report.update as Mock).mockResolvedValue({
         ...mockReport,
-        status: 'REVIEWED',
+        status: ReportStatus.REVIEWED,
       });
 
-      const result = await moderationService.updateReportStatus('report-1', 'REVIEWED');
+      const result = await moderationService.updateReportStatus('report-1', ReportStatus.REVIEWED);
 
-      expect(result.status).toBe('REVIEWED');
+      expect(result.status).toBe(ReportStatus.REVIEWED);
       expect(prisma.report.update).toHaveBeenCalledWith({
         where: { id: 'report-1' },
-        data: { status: 'REVIEWED' },
+        data: { status: ReportStatus.REVIEWED },
       });
       expect(prisma.post.update).not.toHaveBeenCalled();
     });
@@ -111,7 +149,7 @@ describe('Moderation Service & RolesGuard Suite', () => {
       (prisma.report.findUnique as Mock).mockResolvedValue(null);
 
       await expect(
-        moderationService.updateReportStatus('invalid-id', 'RESOLVED')
+        moderationService.updateReportStatus('invalid-id', ReportStatus.RESOLVED)
       ).rejects.toThrow('Report not found');
     });
   });
@@ -168,6 +206,54 @@ describe('Moderation Service & RolesGuard Suite', () => {
       const context2 = createMockContext(undefined, true);
       expect(guard.canActivate(context1)).toBe(false);
       expect(guard.canActivate(context2)).toBe(false);
+    });
+  });
+
+  describe('DTO Validation Tests', () => {
+    describe('UpdateReportDto', () => {
+      it('should pass with a valid status', async () => {
+        const dto = new UpdateReportDto();
+        dto.status = ReportStatus.RESOLVED;
+        const errors = await validate(dto);
+        expect(errors.length).toBe(0);
+      });
+
+      it('should fail with an invalid status', async () => {
+        const dto = new UpdateReportDto();
+        dto.status = 'INVALID_STATUS' as any;
+        const errors = await validate(dto);
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].constraints).toHaveProperty('isEnum');
+      });
+    });
+
+    describe('GetReportsQueryDto', () => {
+      it('should pass with valid status and pagination parameters', async () => {
+        const dto = new GetReportsQueryDto();
+        dto.status = ReportStatus.PENDING;
+        dto.page = 1;
+        dto.limit = 10;
+        const errors = await validate(dto);
+        expect(errors.length).toBe(0);
+      });
+
+      it('should fail with invalid query parameter values', async () => {
+        const dto = new GetReportsQueryDto();
+        dto.status = 'INVALID_STATUS' as any;
+        dto.page = 0; // page must be at least 1
+        dto.limit = -5; // limit must be at least 1
+        const errors = await validate(dto);
+        expect(errors.length).toBeGreaterThan(0);
+      });
+
+      it('should respect default values', async () => {
+        const dto = new GetReportsQueryDto();
+        expect(dto.status).toBe(ReportStatus.PENDING);
+        expect(dto.page).toBe(1);
+        expect(dto.limit).toBe(50);
+        const errors = await validate(dto);
+        expect(errors.length).toBe(0);
+      });
     });
   });
 });

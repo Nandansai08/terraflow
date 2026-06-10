@@ -1,5 +1,5 @@
-import { Injectable, InternalServerErrorException, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { prisma } from '@terraflow/database';
+import { Injectable, InternalServerErrorException, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
+import { prisma, ReportStatus } from '@terraflow/database';
 import * as h3 from 'h3-js';
 
 export interface ExploreCluster {
@@ -336,12 +336,22 @@ export class PostsService {
       throw new NotFoundException('Post not found');
     }
 
+    const existingReport = await prisma.report.findFirst({
+      where: {
+        postId,
+        reporterId: userId,
+      },
+    });
+    if (existingReport) {
+      throw new ConflictException('You have already reported this post');
+    }
+
     await prisma.report.create({
       data: {
         postId,
         reporterId: userId,
         reason: reason.trim(),
-        status: 'PENDING',
+        status: ReportStatus.PENDING,
       },
     });
 
