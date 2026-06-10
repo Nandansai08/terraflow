@@ -1,11 +1,12 @@
-import { Injectable, BadRequestException, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
 import { Storage } from '@google-cloud/storage';
-import sharp from 'sharp';
+import exifr from 'exifr';
 import * as fs from 'fs';
 import * as path from 'path';
 
 @Injectable()
 export class StorageService implements OnModuleInit {
+  private readonly logger = new Logger(StorageService.name);
   private gcsStorage?: Storage;
   private bucketName?: string;
   private localUploadsDir = path.join(process.cwd(), 'public', 'uploads');
@@ -28,12 +29,12 @@ export class StorageService implements OnModuleInit {
     if (hasCreds) {
       try {
         this.gcsStorage = new Storage({ keyFilename: credsPath });
-        console.log(`☁️  [Terraflow GCS]: Google Cloud Storage engine initialized on bucket: ${this.bucketName}`);
+        this.logger.log(`☁️  [Terraflow GCS]: Google Cloud Storage engine initialized on bucket: ${this.bucketName}`);
       } catch (err) {
-        console.warn('⚠️  [Terraflow Storage Warning]: GCS failed initialization. Falling back to local storage.', err);
+        this.logger.warn('⚠️  [Terraflow Storage Warning]: GCS failed initialization. Falling back to local storage.', err);
       }
     } else {
-      console.log('ℹ️  [Terraflow Storage]: GOOGLE_APPLICATION_CREDENTIALS not found or invalid. Using Local Filesystem Engine.');
+      this.logger.log('ℹ️  [Terraflow Storage]: GOOGLE_APPLICATION_CREDENTIALS not found or invalid. Using Local Filesystem Engine.');
       
       // Ensure local uploads directory exists
       if (!fs.existsSync(this.localUploadsDir)) {
@@ -71,7 +72,7 @@ export class StorageService implements OnModuleInit {
 
         return `https://storage.googleapis.com/${this.bucketName}/${uniqueFilename}`;
       } catch (err) {
-        console.error('GCS Upload Error, trying local fallback...', err);
+        this.logger.error('GCS Upload Error, trying local fallback...', err);
       }
     }
 
@@ -88,22 +89,16 @@ export class StorageService implements OnModuleInit {
 
   async extractExifGPS(buffer: Buffer): Promise<{ latitude: number; longitude: number } | null> {
     try {
-      const meta = await sharp(buffer).metadata();
-      if (!meta.exif) return null;
-
-      // Extract coordinates from basic metadata EXIF parameters if present
-      // To prevent crashes on raw binary parsing, we extract safely
-      console.log('parsing EXIF photo metadata coordinates tags...');
-      
-      // Simple parser simulation retrieving Eiffel Tower coordinates if EXIF matches standard logs
-      // In production, sharp reads tags. We fall back to parsed coords.
-      if (meta.width && meta.width > 2000) {
-        return { latitude: 48.8584, longitude: 2.2945 };
+      const gps = await exifr.gps(buffer);
+      if (gps && typeof gps.latitude === 'number' && typeof gps.longitude === 'number') {
+        const { latitude, longitude } = gps;
+        if (latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
+          return { latitude, longitude };
+        }
       }
-      
       return null;
     } catch (err) {
-      console.warn('Failed parsing EXIF meta tags.', err);
+      this.logger.warn('Failed parsing EXIF meta tags.', err);
       return null;
     }
   }
