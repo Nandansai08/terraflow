@@ -1,5 +1,5 @@
-import { Injectable, InternalServerErrorException, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { prisma } from '@terraflow/database';
+import { Injectable, InternalServerErrorException, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
+import { prisma, ReportStatus } from '@terraflow/database';
 import * as h3 from 'h3-js';
 
 export interface ExploreCluster {
@@ -144,6 +144,7 @@ export class PostsService {
     const whereConditions = {
       latitude: { gte: Number(minLat), lte: Number(maxLat) },
       longitude: { gte: Number(minLng), lte: Number(maxLng) },
+      isModerated: false,
       OR: visibilityConditions,
       ...(category ? { tags: { has: category.toLowerCase() } } : {}),
     };
@@ -266,6 +267,7 @@ export class PostsService {
       where: {
         latitude: { gte: latitude - latOffset, lte: latitude + latOffset },
         longitude: { gte: longitude - lngOffset, lte: longitude + lngOffset },
+        isModerated: false,
         OR: visibilityConditions,
       },
       orderBy: { createdAt: 'desc' },
@@ -322,6 +324,41 @@ export class PostsService {
     return { success: true };
   }
 
+  // ── Report post ──────────────────────────────────────────────────────────
+  async reportPost(postId: string, userId: string, reason: string) {
+    if (!reason || typeof reason !== 'string' || reason.trim() === '') {
+      throw new BadRequestException('Reason must be a non-empty string');
+    }
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    const existingReport = await prisma.report.findFirst({
+      where: {
+        postId,
+        reporterId: userId,
+      },
+    });
+    if (existingReport) {
+      throw new ConflictException('You have already reported this post');
+    }
+
+    await prisma.report.create({
+      data: {
+        postId,
+        reporterId: userId,
+        reason: reason.trim(),
+        status: ReportStatus.PENDING,
+      },
+    });
+
+    return { success: true, message: 'Post reported successfully.' };
+  }
+
   // ── Search posts by title, tag, or location name ─────────────────────────
   async searchPosts(params: {
     q?: string;
@@ -345,6 +382,7 @@ export class PostsService {
     ];
 
     const where: any = {
+      isModerated: false,
       OR: visibilityConditions,
     };
 

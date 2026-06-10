@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { PostsService } from './posts.service.js';
 import { PostsController } from './posts.controller.js';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard.js';
-import { prisma } from '@terraflow/database';
-import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { prisma, ReportStatus } from '@terraflow/database';
+import { UnauthorizedException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
 import * as h3 from 'h3-js';
 import { JsonWebTokenError } from 'jsonwebtoken';
 
@@ -24,7 +24,17 @@ vi.mock('@terraflow/database', () => ({
     },
     follow: {
       findUnique: vi.fn(),
+    },
+    report: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
     }
+  },
+  ReportStatus: {
+    PENDING: 'PENDING',
+    REVIEWED: 'REVIEWED',
+    DISMISSED: 'DISMISSED',
+    RESOLVED: 'RESOLVED',
   },
 }));
 
@@ -709,6 +719,115 @@ describe('Terraflow Spatial Engine & Privacy Interceptor Integration Suite', () 
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         expect(prisma.travelStats.update).toHaveBeenCalledTimes(2);
       });
+    });
+  });
+
+  describe('Moderation Visibility Gates', () => {
+    it('explore() should filter by isModerated: false', async () => {
+      (prisma.post.findMany as Mock).mockResolvedValue([]);
+      (prisma.post.count as Mock).mockResolvedValue(0);
+
+      await postsService.explore({
+        minLat: 10,
+        maxLat: 20,
+        minLng: 10,
+        maxLng: 20,
+        zoomLevel: 10,
+      });
+
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isModerated: false,
+          }),
+        })
+      );
+    });
+
+    it('searchPosts() should filter by isModerated: false', async () => {
+      (prisma.post.findMany as Mock).mockResolvedValue([]);
+      (prisma.post.count as Mock).mockResolvedValue(0);
+
+      await postsService.searchPosts({ q: 'test' });
+
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isModerated: false,
+          }),
+        })
+      );
+    });
+
+    it('getTimeline() should filter by isModerated: false', async () => {
+      (prisma.post.findMany as Mock).mockResolvedValue([]);
+
+      await postsService.getTimeline(10, 20);
+
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isModerated: false,
+          }),
+        })
+      );
+    });
+  });
+
+  describe('PostsService.reportPost()', () => {
+    it('should successfully report a post and trim reason', async () => {
+      const mockPost = { id: 'post-123', title: 'Post' };
+      (prisma.post.findUnique as Mock).mockResolvedValue(mockPost);
+      (prisma.report.findFirst as Mock).mockResolvedValue(null);
+      (prisma.report.create as Mock).mockResolvedValue({ id: 'report-1' });
+
+      const result = await postsService.reportPost('post-123', 'user-456', '  Spam and abuse  ');
+
+      expect(result.success).toBe(true);
+      expect(prisma.report.create).toHaveBeenCalledWith({
+        data: {
+          postId: 'post-123',
+          reporterId: 'user-456',
+          reason: 'Spam and abuse',
+          status: ReportStatus.PENDING,
+        },
+      });
+    });
+
+    it('should throw BadRequestException if reason is empty or whitespace-only', async () => {
+      await expect(postsService.reportPost('post-123', 'user-456', '   ')).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(postsService.reportPost('post-123', 'user-456', '')).rejects.toThrow(
+        BadRequestException
+      );
+    });
+
+    it('should throw NotFoundException if reported post does not exist', async () => {
+      (prisma.post.findUnique as Mock).mockResolvedValue(null);
+
+      await expect(postsService.reportPost('invalid-post', 'user-456', 'Spam')).rejects.toThrow(
+        'Post not found'
+      );
+    });
+
+    it('should throw ConflictException if reporter has already reported the post', async () => {
+      const mockPost = { id: 'post-123', title: 'Post' };
+      (prisma.post.findUnique as Mock).mockResolvedValue(mockPost);
+      // Simulate that a report already exists
+      (prisma.report.findFirst as Mock).mockResolvedValue({ id: 'existing-report-id' });
+
+      await expect(
+        postsService.reportPost('post-123', 'user-456', 'Spam')
+      ).rejects.toThrow(ConflictException);
+
+      expect(prisma.report.findFirst).toHaveBeenCalledWith({
+        where: {
+          postId: 'post-123',
+          reporterId: 'user-456',
+        },
+      });
+      expect(prisma.report.create).not.toHaveBeenCalled();
     });
   });
 });
