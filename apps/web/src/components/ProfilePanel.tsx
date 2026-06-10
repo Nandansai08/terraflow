@@ -89,7 +89,7 @@ export default function ProfilePanel({ user, token, onClose, onPinClick, onProfi
         {/* Header */}
         <div style={s.header}>
           <span style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 3, color: '#a78bfa' }}>Profile</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 22, cursor: 'pointer' }}>×</button>
+          <button onClick={onClose} aria-label="Close profile" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 22, cursor: 'pointer' }}>×</button>
         </div>
 
         {/* Profile info */}
