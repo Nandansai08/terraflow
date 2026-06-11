@@ -61,12 +61,19 @@ On Windows PowerShell, use `npm.cmd` (for example, `npm.cmd install` or `npm.cmd
 git clone https://github.com/<your-org>/terraflow.git
 cd terraflow
 npm install
+```
+
+Configure your local environment variables by copying the template file `.env.example` to `.env` in the root directory:
+
+```bash
 cp .env.example .env
 ```
 
-Edit `.env` with local values. At minimum, set `DATABASE_URL`, `JWT_SECRET`, and `JWT_REFRESH_SECRET`.
+Edit the newly created `.env` file with your local configuration values. At minimum, you must specify the required variables `DATABASE_URL`, `JWT_SECRET`, and `JWT_REFRESH_SECRET`.
 
 ## Environment Variables
+
+The API performs runtime checks for certain authentication-related environment variables and may fail to initialize related services if required values are missing.
 
 ### Required Local Development
 
