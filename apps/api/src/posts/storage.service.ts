@@ -3,6 +3,7 @@ import { Storage } from '@google-cloud/storage';
 import exifr from 'exifr';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ALLOWED_MIME_TYPES } from '@terraflow/shared';
 
 @Injectable()
 export class StorageService implements OnModuleInit {
@@ -45,8 +46,7 @@ export class StorageService implements OnModuleInit {
 
   async uploadFile(file: { buffer: Buffer; originalname: string; mimetype: string }): Promise<string> {
     // Validate File Types
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'];
-    if (!allowedMimeTypes.includes(file.mimetype)) {
+    if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(file.mimetype)) {
       throw new BadRequestException('Unsupported file format. Please upload JPEG, PNG, WEBP images, or MP4 videos only.');
     }
 

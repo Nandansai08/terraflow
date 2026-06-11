@@ -120,6 +120,7 @@ describe('StorageService File Upload Validation', () => {
     };
 
     const url = await storageService.uploadFile(file);
+    // Uploaded files are served from the public /uploads route.
     expect(url).toContain('/uploads/');
     expect(writeFileSync).toHaveBeenCalled();
   });

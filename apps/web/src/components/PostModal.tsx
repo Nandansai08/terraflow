@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ImagePlus, MapPin, Send, X } from 'lucide-react';
+import { ALLOWED_MIME_TYPES } from '@terraflow/shared';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
@@ -27,6 +28,10 @@ export default function PostModal({ lat, lng, token, onClose, onCreated }: Props
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const resetFileInput = () => {
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
   useEffect(() => {
     if (!lat && !lng) return;
     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
@@ -50,12 +55,11 @@ export default function PostModal({ lat, lng, token, onClose, onCreated }: Props
     if (!file) return;
 
     // Allowed MIME types
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'];
-    if (!allowedMimeTypes.includes(file.type)) {
+    if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(file.type)) {
       setError('Unsupported file format. Please upload JPEG, PNG, WEBP images, or MP4 videos only.');
       setPreviewUrl(null);
       setUploadedUrl(null);
-      if (fileRef.current) fileRef.current.value = '';
+      resetFileInput();
       return;
     }
 
@@ -70,7 +74,7 @@ export default function PostModal({ lat, lng, token, onClose, onCreated }: Props
       }
       setPreviewUrl(null);
       setUploadedUrl(null);
-      if (fileRef.current) fileRef.current.value = '';
+      resetFileInput();
       return;
     }
 
@@ -94,7 +98,7 @@ export default function PostModal({ lat, lng, token, onClose, onCreated }: Props
       setError(err.message || 'Upload failed');
       setPreviewUrl(null);
       setUploadedUrl(null);
-      if (fileRef.current) fileRef.current.value = '';
+      resetFileInput();
     } finally {
       setUploading(false);
     }
