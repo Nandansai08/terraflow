@@ -103,6 +103,8 @@ npm run build
 
 Run `npm run format` to automatically format files using Prettier before committing.
 
+For visual or interaction changes on the globe homepage, verify behaviors against the [Globe Homepage QA Checklist](docs/qa/globe-homepage.md).
+
 ## Reporting Security Issues
 
 Do not open public issues for vulnerabilities. Email or privately contact the maintainers with:
