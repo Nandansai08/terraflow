@@ -77,6 +77,7 @@ clear verification path are easier to review and merge.
 - [ ] `npm run lint` passes.
 - [ ] `npm run format:check` passes.
 - [ ] `npm run build` passes.
+- [ ] For visual or interaction changes on the globe homepage, verify behaviors against the [Globe Homepage QA Checklist](docs/qa/globe-homepage.md).
 - [ ] UI changes include before/after screenshots or a short screen recording.
 - [ ] API behavior changes include tests or a clear manual verification note.
 - [ ] Documentation is updated when setup, behavior, or environment variables change.
@@ -102,8 +103,6 @@ npm run build
 ```
 
 Run `npm run format` to automatically format files using Prettier before committing.
-
-For visual or interaction changes on the globe homepage, verify behaviors against the [Globe Homepage QA Checklist](docs/qa/globe-homepage.md).
 
 ## Reporting Security Issues
 

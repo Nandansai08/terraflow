@@ -2,6 +2,8 @@
 
 This document details the expected user-visible behaviors for the TerraFlow globe homepage (`/`) and guides manual verification across viewports, controls, and active features.
 
+> Note: Do not commit checked items to this file. Use a local copy or check off items in your PR description during review.
+
 ---
 
 ## Expected Local URLs
@@ -33,7 +35,7 @@ Verify local monorepo builds using the following ports:
 
 - [ ] **Split Search Results**: Querying a term shows two distinct categories in the suggestion dropdown:
   - **Locations**: Pinned landmarks from OpenStreetMap Nominatim.
-  - **Memories**: Match matching titles and descriptions from the TerraFlow API database.
+  - **Memories**: Matching titles and descriptions from the TerraFlow API database.
 - [ ] **Camera Navigation on Selection**:
   - Selecting a *Location* pans and flies the camera to the coordinate bounds.
   - Selecting a *Memory* highlights the memory, opens the `MemoryCard` view, and flies the camera close to the memory pin.
@@ -63,3 +65,4 @@ Verify local monorepo builds using the following ports:
 - [ ] **Globe Camera Orbit**: Dragging on the globe pans the planet; right-clicking and dragging changes camera tilt/pitch.
 - [ ] **Global Reset Control**: Clicking the `LocateFixed` icon button ("Return to global view") flies the camera smoothly to default overview coordinates (Latitude `20`, Longitude `10`, height `10,500,000` meters).
 - [ ] **Pin Interactions**: Clicking a pin flies the camera close to that memory and highlights it.
+- [ ] **Zoom Controls**: Scroll wheel (desktop) and pinch-to-zoom (mobile) adjust camera altitude smoothly without snapping.
