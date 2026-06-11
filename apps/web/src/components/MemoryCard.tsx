@@ -52,7 +52,7 @@ export default function MemoryCard({ post, currentUserId, token, onClose, onDele
 
       <div className="tf-memory-media">
         {image && !imageError ? (
-          <img src={image} alt={post.title} onError={() => setImageError(true)} />
+          <img src={image} alt={`${post.title || 'Memory'} at ${location}`} onError={() => setImageError(true)} />
         ) : image ? (
           <div
             className="tf-memory-media-fallback"
@@ -62,8 +62,6 @@ export default function MemoryCard({ post, currentUserId, token, onClose, onDele
             <ImageOff size={24} />
             <span>Photo unavailable</span>
           </div>
-        {image ? (
-          <img src={image} alt={`${post.title || 'Memory'} at ${location}`} />
         ) : (
           <div className="tf-memory-media-placeholder">
             No photo attached
