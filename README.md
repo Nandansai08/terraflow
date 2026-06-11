@@ -35,6 +35,8 @@ skills/             TerraFlow project review and QA instructions
 
 The user journey should keep Earth as the primary surface. Guests can explore first; account creation appears only when a user uploads, saves, follows, or manages a profile.
 
+For a detailed mapping between user interface actions and their corresponding REST API routes, controllers, and services, see the [API Route Mapping Guide](docs/architecture.md).
+
 ## Design System
 
 For styling guidelines, typography, color tokens, and core components, see the [TerraFlow Design System](docs/terraflow-design-system.md).
