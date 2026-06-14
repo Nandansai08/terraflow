@@ -160,6 +160,7 @@ The repository provides standard root-level scripts to verify changes across the
 - **`npm run lint`**: Analyzes code quality using ESLint.
 - **`npm run format`**: Automatically formats source code using Prettier.
 - **`npm run format:check`**: Validates code formatting style rules (used in CI pipelines).
+- **Manual QA**: Verify visual changes and interactions using the [Globe Homepage QA Checklist](docs/qa/globe-homepage.md).
 
 ## Contributing
 
