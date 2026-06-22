@@ -20,6 +20,8 @@ export default function PublicProfilePage() {
   const globeRef = useRef<CesiumGlobeHandle>(null);
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [user, setUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [pins, setPins] = useState<GlobePin[]>([]);
 
   useEffect(() => {
@@ -29,6 +31,26 @@ export default function PublicProfilePage() {
     }
 
     let cancelled = false;
+
+    async function fetchCurrentUser() {
+      if (typeof window === 'undefined') return;
+      const token = localStorage.getItem('tf_token');
+      if (!token) {
+        if (!cancelled) setAuthChecked(true);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!response.ok) return;
+        const profile = await response.json();
+        if (!cancelled) setCurrentUser(profile);
+      } catch {
+        // Ignore auth failures on profile pages.
+      } finally {
+        if (!cancelled) setAuthChecked(true);
+      }
+    }
 
     async function fetchProfile() {
       try {
@@ -65,12 +87,19 @@ export default function PublicProfilePage() {
       }
     }
 
+    fetchCurrentUser();
     fetchProfile();
     return () => { cancelled = true; };
   }, [username]);
 
+  const isOwner = authChecked && Boolean(currentUser && user && currentUser.username === user.username);
+
   function handleFlyTo(lat: number, lng: number) {
     globeRef.current?.flyTo(lat, lng, 90000);
+  }
+
+  function handlePublish() {
+    router.push('/?upload=1');
   }
 
   function handlePinClick(id: string) {
@@ -190,6 +219,8 @@ export default function PublicProfilePage() {
         <PublicProfile
           user={user}
           onFlyTo={handleFlyTo}
+          onPublish={handlePublish}
+          isOwner={isOwner}
         />
       )}
     </main>

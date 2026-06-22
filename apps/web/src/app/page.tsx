@@ -119,6 +119,7 @@ export default function HomePage() {
     const token = params.get('token');
     const userId = params.get('userId');
     const errCode = params.get('error');
+    const openUpload = params.get('upload') === '1';
 
     if (errCode) {
       window.history.replaceState({}, '', '/');
@@ -132,16 +133,19 @@ export default function HomePage() {
       localStorage.setItem('tf_token', token);
       localStorage.setItem('tf_uid', userId);
       window.history.replaceState({}, '', '/');
-      hydrateSession(token);
+      hydrateSession(token, openUpload);
       return;
     }
 
     const stored = getToken();
-    if (stored) hydrateSession(stored);
-    else setAuthState('guest');
+    if (stored) hydrateSession(stored, openUpload);
+    else {
+      setAuthState('guest');
+      if (openUpload) setShowAuth(true);
+    }
   }, []);
 
-  async function hydrateSession(token: string) {
+  async function hydrateSession(token: string, openUpload = false) {
     try {
       const response = await fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
       if (!response.ok) throw new Error('Session expired');
@@ -149,10 +153,14 @@ export default function HomePage() {
       setCurrentUser(user);
       setAuthState('authenticated');
       loadGlobePins();
+      if (openUpload) {
+        setShowPostModal(true);
+      }
     } catch {
       localStorage.removeItem('tf_token');
       localStorage.removeItem('tf_uid');
       setAuthState('guest');
+      if (openUpload) setShowAuth(true);
     }
   }
 
@@ -245,6 +253,8 @@ export default function HomePage() {
     setAuthError('');
     setAuthBusy(true);
 
+    const openUpload = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('upload') === '1';
+
     try {
       if (isRegister) {
         const response = await fetch(`${API}/auth/register`, {
@@ -277,6 +287,10 @@ export default function HomePage() {
       setEmail('');
       setPassword('');
       loadGlobePins();
+      if (openUpload) {
+        setShowPostModal(true);
+        window.history.replaceState({}, '', '/');
+      }
     } catch (err: any) {
       setAuthError(err.message || 'Authentication failed');
     } finally {
