@@ -1,7 +1,7 @@
 ---
 name: Feature Request
 about: Suggest a new capability or enhancement for TerraFlow
-title: "[Feature]: "
+title: '[Feature]: '
 labels: enhancement, feature-request, needs-triage
 assignees: ''
 ---

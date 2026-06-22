@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import globals from 'globals';
 
 export default [
   {
@@ -31,6 +32,13 @@ export default [
   {
     languageOptions: {
       parser: tseslint.parser,
+    },
+  },
+
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 ];
