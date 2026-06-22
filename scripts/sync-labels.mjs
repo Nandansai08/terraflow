@@ -50,18 +50,15 @@ async function upsertLabel(label) {
   }
 
   if (createRes.status === 422) {
-    const updateRes = await fetch(
-      `${API_BASE}/labels/${encodeURIComponent(label.name)}`,
-      {
-        method: 'PATCH',
-        headers: HEADERS,
-        body: JSON.stringify({
-          new_name: label.name,
-          color: label.color,
-          description: label.description,
-        }),
-      }
-    );
+    const updateRes = await fetch(`${API_BASE}/labels/${encodeURIComponent(label.name)}`, {
+      method: 'PATCH',
+      headers: HEADERS,
+      body: JSON.stringify({
+        new_name: label.name,
+        color: label.color,
+        description: label.description,
+      }),
+    });
 
     if (updateRes.ok) {
       console.log(`UPDATED: ${label.name} (#${label.color})`);

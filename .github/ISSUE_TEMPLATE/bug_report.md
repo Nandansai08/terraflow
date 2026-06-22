@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Report broken or incorrect behavior in TerraFlow
-title: "[Bug]: "
+title: '[Bug]: '
 labels: bug, needs-triage
 assignees: ''
 ---

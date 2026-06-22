@@ -273,7 +273,8 @@ Contributors working on media upload, profile photos, or post attachments who cu
     assignees: [],
   },
   {
-    title: 'Document the Visibility enum semantics (PUBLIC / FRIENDS / PRIVATE) and how "friends" is defined',
+    title:
+      'Document the Visibility enum semantics (PUBLIC / FRIENDS / PRIVATE) and how "friends" is defined',
     body: `## Which doc is missing or unclear?
 \`docs/architecture.md\` (per the README) maps UI actions to API routes, but there's no clear product/contributor-facing doc explaining the exact semantics of each \`Visibility\` enum value — in particular, whether \`FRIENDS\` requires mutual follow or one-directional follow (directly related to the bug filed above about possible FRIENDS visibility leakage).
 
@@ -339,10 +340,9 @@ async function fetchExistingTitles() {
   let page = 1;
 
   while (true) {
-    const res = await fetch(
-      `${API_BASE}/issues?state=all&per_page=100&page=${page}`,
-      { headers: HEADERS }
-    );
+    const res = await fetch(`${API_BASE}/issues?state=all&per_page=100&page=${page}`, {
+      headers: HEADERS,
+    });
 
     if (!res.ok) {
       throw new Error(`Failed to list existing issues: ${res.status} ${await res.text()}`);

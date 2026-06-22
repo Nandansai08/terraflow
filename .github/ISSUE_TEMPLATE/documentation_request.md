@@ -1,7 +1,7 @@
 ---
 name: Documentation Request
 about: Report missing, unclear, or outdated documentation
-title: "[Docs]: "
+title: '[Docs]: '
 labels: documentation, needs-triage
 assignees: ''
 ---
