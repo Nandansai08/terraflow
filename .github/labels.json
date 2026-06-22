@@ -1,0 +1,20 @@
+[
+  { "name": "bug", "color": "d73a4a", "description": "Broken or incorrect behavior." },
+  { "name": "regression", "color": "b60205", "description": "Previously working behavior that broke." },
+  { "name": "enhancement", "color": "a2eeef", "description": "Improvement to an existing feature." },
+  { "name": "feature-request", "color": "0e8a16", "description": "Request for a new capability." },
+  { "name": "documentation", "color": "0075ca", "description": "Docs, README, comments, or examples." },
+  { "name": "needs-triage", "color": "d4c5f9", "description": "Not yet reviewed or scoped by a maintainer." },
+  { "name": "in-progress", "color": "fbca04", "description": "Actively being worked on." },
+  { "name": "blocked", "color": "b60205", "description": "Waiting on a dependency, decision, or credentials." },
+  { "name": "wontfix", "color": "ffffff", "description": "Will not be worked on." },
+  { "name": "duplicate", "color": "cfd3d7", "description": "Already reported elsewhere." },
+  { "name": "priority:low", "color": "c2e0c6", "description": "Low priority." },
+  { "name": "priority:medium", "color": "fef2c0", "description": "Medium priority." },
+  { "name": "priority:high", "color": "e99695", "description": "High priority." },
+  { "name": "needs-review", "color": "fbca04", "description": "Pull request is ready for review." },
+  { "name": "approved", "color": "0e8a16", "description": "Pull request has been approved." },
+  { "name": "changes-requested", "color": "d93f0b", "description": "Pull request needs changes before merge." },
+  { "name": "good-first-issue", "color": "7057ff", "description": "Small, well-scoped task for first-time contributors." },
+  { "name": "help-wanted", "color": "008672", "description": "Maintainers are actively inviting outside help." }
+]
