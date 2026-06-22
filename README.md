@@ -1,6 +1,15 @@
 # TerraFlow
 
-TerraFlow is the Memory Layer of Earth: a premium, exploration-first WebGL globe for discovering, mapping, and sharing physical memories. The product centers on a full-screen Cesium globe, public discovery before login, and lightweight publishing when a traveler is ready to pin a story to a place.
+[![CI](https://github.com/Nandansai08/terraflow/actions/workflows/ci.yml/badge.svg)](https://github.com/Nandansai08/terraflow/actions/workflows/ci.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](./package.json)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+
+TerraFlow is the Memory Layer of Earth: a premium, exploration-first WebGL globe for discovering, mapping, and sharing physical memories. Most travel apps bury memories in private camera rolls or feed-style social apps that compete for attention with ads and noise; TerraFlow gives every memory a permanent place on a living 3D globe, free to explore before you ever create an account. The product centers on a full-screen Cesium globe, public discovery before login, and lightweight publishing when a traveler is ready to pin a story to a place.
+
+## Live Demo
+
+A hosted demo will be linked here once available: `https://terraflow.example.com` (placeholder — update when a public deployment exists).
 
 ## Features
 
@@ -74,6 +83,7 @@ For capture requirements, viewport recommendations, and naming conventions, see:
 - Node.js 18 or newer
 - npm 9 or newer
 - PostgreSQL 14 or newer
+- Docker and Docker Compose (recommended) — `docker-compose.yml` provides local PostGIS/Postgres and Redis containers so you do not need to install them natively
 - Optional: Redis for worker-backed flows
 - Optional: Google Cloud Storage credentials for production media storage
 
@@ -145,6 +155,14 @@ The API performs runtime checks for certain authentication-related environment v
 
 ## Database Setup
 
+If you don't already have PostgreSQL and Redis running locally, start them with Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+This starts a `postgis/postgis` container matching `DATABASE_URL` in `.env.example` and a Redis container for worker-backed flows. Then generate the Prisma client and sync the schema:
+
 ```bash
 npm run db:generate
 npm run db:push
@@ -197,6 +215,7 @@ The repository provides standard root-level scripts to verify changes across the
 - **`npm run lint`**: Analyzes code quality using ESLint.
 - **`npm run format`**: Automatically formats source code using Prettier.
 - **`npm run format:check`**: Validates code formatting style rules (used in CI pipelines).
+- **`npm run test:e2e`**: Runs Playwright end-to-end tests (see `e2e/`), including the guest exploration journey. Playwright boots the web app automatically via `webServer` in `playwright.config.ts`.
 - **Manual QA**: Verify visual changes and interactions using the [Globe Homepage QA Checklist](docs/qa/globe-homepage.md).
 
 ## Contributing

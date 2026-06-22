@@ -29,14 +29,43 @@ npm.cmd install
 npm.cmd run build
 ```
 
+## Monorepo Workspace Structure
+
+TerraFlow is an npm workspaces monorepo. Know which workspace you're touching before you start:
+
+```text
+apps/
+  web/              Next.js app, Cesium globe, upload and profile UI
+  api/              NestJS API, auth, posts, social graph, gateway, worker
+packages/
+  database/         Prisma schema and generated database client entrypoint
+  shared/           Shared TypeScript types and constants
+docs/               Product and contributor documentation
+e2e/                Playwright end-to-end specs
+```
+
+Most root scripts accept a `--workspace=<path>` target (see `package.json`), for example `npm run build --workspace=apps/web`. If your change spans `packages/shared` or `packages/database`, rebuild those packages (`npm run build:shared`, `npm run db:generate`) before testing `apps/web` or `apps/api` against them.
+
 ## Branch Naming
 
-Use short, descriptive branch names:
+Use short, descriptive branch names with a type prefix:
 
+- `feat/search-empty-state`
 - `fix/upload-error-message`
 - `docs/setup-guide`
-- `feat/search-empty-state`
+- `chore/dependency-bump`
 - `test/posts-visibility`
+
+## Commit Messages
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages, for example:
+
+- `feat(web): add empty state to search results`
+- `fix(api): verify optional JWT context before decoding`
+- `docs: clarify GCS vs local storage fallback`
+- `chore: bump prisma to 7.8.0`
+
+This keeps history scannable and makes it easy to generate changelog entries.
 
 ## Choosing an Issue
 
@@ -77,6 +106,7 @@ clear verification path are easier to review and merge.
 - [ ] `npm run lint` passes.
 - [ ] `npm run format:check` passes.
 - [ ] `npm run build` passes.
+- [ ] `npm run test:e2e` passes for changes affecting user-facing flows covered by `e2e/`.
 - [ ] For visual or interaction changes on the globe homepage, verify behaviors against the [Globe Homepage QA Checklist](docs/qa/globe-homepage.md).
 - [ ] UI changes include before/after screenshots or a short screen recording.
 - [ ] API behavior changes include tests or a clear manual verification note.
@@ -101,6 +131,14 @@ npm run lint
 npm run format:check
 npm run build
 ```
+
+For changes that touch the guest exploration journey, upload flow, or other user-facing flows covered by `e2e/`, also run:
+
+```bash
+npm run test:e2e
+```
+
+Playwright will automatically start the web app (`npm run dev:web`) per `playwright.config.ts`; make sure the API and database are running first if the journey under test depends on them.
 
 Verify that your changes conform to the [Performance Budgets & Cesium Loading Guide](docs/performance.md).
 
@@ -132,6 +170,21 @@ Do not open public issues for vulnerabilities. Email or privately contact the ma
 - Reproduction steps
 - Impact
 - Suggested fix, if known
+
+## Code Review Process and Turnaround
+
+- Maintainers aim to leave a first review on open pull requests within 72 hours.
+- Expect at least one round of feedback on non-trivial PRs; small docs/copy fixes may be merged directly.
+- CI (`.github/workflows/ci.yml`) must pass before merge: build, Prisma client generation, format check, lint, and tests.
+- Reviewers focus on correctness, the product principles above, security (especially auth and visibility rules), and test coverage before style nitpicks.
+- If a PR goes quiet for more than a week awaiting contributor changes, maintainers may close it with a note that it can be reopened when ready.
+
+## Reporting Bugs vs. Requesting Features
+
+- **Bugs**: something existing is broken or behaves incorrectly. Open an issue using the "Bug Report" template (`.github/ISSUE_TEMPLATE/bug_report.md`) with reproduction steps, expected vs. actual behavior, and environment details.
+- **Features**: a new capability or enhancement that doesn't exist yet. Open an issue using the "Feature Request" template (`.github/ISSUE_TEMPLATE/feature_request.md`) describing the problem it solves, not just the solution.
+- **Docs gaps**: missing or unclear documentation gets its own "Documentation Request" template (`.github/ISSUE_TEMPLATE/documentation_request.md`).
+- When unsure which category applies, default to a bug report if current behavior is broken, otherwise use a feature request.
 
 ## Maintainer Response Expectations
 
