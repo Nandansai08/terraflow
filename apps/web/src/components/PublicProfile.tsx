@@ -27,10 +27,12 @@ interface PublicProfileProps {
     };
   };
   onFlyTo: (lat: number, lng: number) => void;
+  onPublish?: () => void;
+  isOwner?: boolean;
   onClose?: () => void;
 }
 
-export default function PublicProfile({ user, onFlyTo, onClose }: PublicProfileProps) {
+export default function PublicProfile({ user, onFlyTo, onPublish, isOwner = false, onClose }: PublicProfileProps) {
   const posts = user.posts || [];
   const joinDate = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -139,8 +141,22 @@ export default function PublicProfile({ user, onFlyTo, onClose }: PublicProfileP
         </div>
 
         {posts.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 20, opacity: 0.3, fontSize: 12 }}>
-            No public memories yet — this explorer hasn't pinned any stories to the globe.
+          <div style={{ textAlign: 'center', padding: 20, fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+            <p style={{ margin: 0, lineHeight: 1.8 }}>
+              {isOwner
+                ? 'You haven’t shared a public memory yet. Pin your first story to the globe and let others discover your journey.'
+                : 'No public memories yet — this explorer hasn’t pinned any stories to the globe.'
+              }
+            </p>
+            {isOwner && onPublish && (
+              <button
+                className="tf-primary"
+                onClick={onPublish}
+                style={{ marginTop: 16, width: '100%' }}
+              >
+                Share your first memory
+              </button>
+            )}
           </div>
         ) : (
           <div style={{
